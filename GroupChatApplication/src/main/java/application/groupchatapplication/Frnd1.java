@@ -3,13 +3,8 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.mycompany.chattingapplication;
+package application.groupchatapplication;
 
-import static com.mycompany.chattingapplication.ChatServer.dis;
-import static com.mycompany.chattingapplication.ChatServer.formatLabel;
-import static com.mycompany.chattingapplication.ChatServer.jf;
-import static com.mycompany.chattingapplication.ChatServer.vertical;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
@@ -19,19 +14,14 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -41,7 +31,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.Timer;
-import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
@@ -49,20 +38,20 @@ import javax.swing.plaf.basic.BasicScrollBarUI;
  *
  * @author dell
  */
-public class ClientChat implements ActionListener {
-
-	JTextField jtf;
+public class Frnd1 implements ActionListener , Runnable{
+        
+        JTextField jtf;
         JButton send;
 	JPanel jp;
-        static JFrame jf;
-        static Box vertical=Box.createVerticalBox();
-        static JPanel jta;
-        static Socket s;
-        static DataInputStream dis;
-        static DataOutputStream dos;
         boolean isTyping;
+        static JFrame jf;
+        static JTextArea jta;
+        static Socket s;
+        static ServerSocket ss;
+        static DataInputStream dis;
+        static DataOutputStream dout;
         
-	public ClientChat() {
+        public Frnd1() {
 	
                 jf=new JFrame();
 		jp=new JPanel();
@@ -78,14 +67,14 @@ public class ClientChat implements ActionListener {
 		jl.setBounds(5,18,20,15);
 		jp.add(jl);
 		
-		ImageIcon ic3=new ImageIcon(getClass().getResource("clientDp.png"));
+		ImageIcon ic3=new ImageIcon(getClass().getResource("groupDp.png"));
 		Image img1=ic3.getImage().getScaledInstance(40,40,Image.SCALE_DEFAULT);
 		ImageIcon ic4=new ImageIcon(img1);
 		JLabel jl2=new JLabel(ic4);
 		jl2.setBounds(30,5,40,40);
 		jp.add(jl2);
 		
-		JLabel jl3=new JLabel("Munni");
+		JLabel jl3=new JLabel("Yaarana");
 		jl3.setFont(new Font("san-serif",Font.BOLD,14));
 		jl3.setForeground(Color.white);
 		jl3.setBounds(75,10,100,15);
@@ -96,7 +85,7 @@ public class ClientChat implements ActionListener {
 		jl4.setForeground(Color.white);
 		jl4.setBounds(75,25,100,18);
 		jp.add(jl4);
-      
+                
                 Timer t=new Timer(1,new ActionListener(){
                     
                     public void actionPerformed(ActionEvent ae)
@@ -107,6 +96,7 @@ public class ClientChat implements ActionListener {
                         }
                     }
                 });
+                
                 t.setInitialDelay(1000);
 		
 		ImageIcon ic5=new ImageIcon(getClass().getResource("3icon.png"));
@@ -160,7 +150,6 @@ public class ClientChat implements ActionListener {
                     }
                 });
                 
-                
                 send =new JButton("send");
                 send.setBounds(235,469,92,30);
                 send.setBackground(new Color(7,94,84));
@@ -168,13 +157,16 @@ public class ClientChat implements ActionListener {
                 send.addActionListener(this);
                 jf.add(send);
                 
-                jta=new JPanel();
+                jta=new JTextArea();
                 jta.setFont(new Font("san-serif",Font.PLAIN,12));
 //                jta.setBackground(Color.red);
-               
-                
+                jta.setEditable(false);
+                jta.setLineWrap(true);
+                jta.setWrapStyleWord(true);
+                 
                 JScrollPane js=new JScrollPane(jta);
-                 js.setBounds(2,52,325,415);
+                js.setBounds(2,52,325,415);
+                js.setBorder(BorderFactory.createEmptyBorder());
                 
                 ScrollBarUI jsui=new BasicScrollBarUI(){
                 protected JButton createDecreaseButton(int Orientation)
@@ -199,99 +191,63 @@ public class ClientChat implements ActionListener {
                 js.getVerticalScrollBar().setUI(jsui);
                 jf.add(js);
                 
+                
+                
                 jf.setSize(330,500);
 		jf.setLayout(null);
-		jf.setLocation(810,150);
+		jf.setLocation(40,150);
                 jf.setUndecorated(true);
 		jf.setVisible(true);
-               
-	}
-        public void actionPerformed(ActionEvent ae)
-        {
-            try {
-                String out = jtf.getText();
-                saveToFile(out);
-                JPanel j2=formatLabel(out);
                 
-                
-                
-                jta.setLayout(new BorderLayout());
-                JPanel right=new JPanel(new BorderLayout());
-                right.add(j2,BorderLayout.LINE_END);
-                vertical.add(right);
-                vertical.add(Box.createVerticalStrut(10));
-
-                jta.add(vertical,BorderLayout.PAGE_START);
-                dos.writeUTF(out);
-                jtf.setText("");
-                jf.validate();
-               
-            } catch (IOException ex) {
-           
-            }
-        } 
-        
-        public static JPanel formatLabel(String str)
-        {
-            JPanel jp3=new JPanel();
-            jp3.setLayout(new BoxLayout(jp3,BoxLayout.Y_AXIS));
-            
-            JLabel jl=new JLabel("<html><p style=\"width:100px\">"+str+"</p></html>");
-            jl.setBackground(new Color(37,211,102));
-            jl.setOpaque(true);
-            jl.setFont(new Font("tahoma",Font.PLAIN,12));
-            jl.setBorder(new EmptyBorder(15,15,15,30));
-            
-            Calendar c=Calendar.getInstance();
-            SimpleDateFormat sdf=new SimpleDateFormat("hh:mm");
-            
-            
-            JLabel j2=new JLabel();
-            j2.setText(sdf.format(c.getTime()));
-            
-            jp3.add(jl);
-            jp3.add(j2);
-            
-            return jp3;
-            
-        }
-         public void saveToFile(String str)
-        {
-            try (FileWriter file = new FileWriter("chat.txt");
-                PrintWriter pw=new PrintWriter(new BufferedWriter(file));){
-     
-                pw.println("Munni :"+str);
-                
-                
-            } catch (Exception ex) {
-                Logger.getLogger(ChatServer.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            
-        }
-       
-    public static void main(String[] args) {
-           
-        new ClientChat();
-        String str="";
                 try{
-                
-                s=new Socket("localhost",10);
-                dis=new DataInputStream(s.getInputStream());
-                dos=new DataOutputStream(s.getOutputStream());
-                
-                while(true){
-                jta.setLayout(new BorderLayout());
-                str=dis.readUTF();
-                JPanel p2=formatLabel(str);
-                JPanel left=new JPanel(new BorderLayout());
-                left.add(p2,BorderLayout.LINE_START);
-                vertical.add(left);
-                vertical.add(Box.createVerticalStrut(10));
-                jta.add(vertical,BorderLayout.PAGE_START);
-                jf.validate();
-                }
+                    s=new Socket("localhost",10);
+                    dis=new DataInputStream(s.getInputStream());
+                    dout=new DataOutputStream(s.getOutputStream());
+                    
+                   
+                    
                 }catch(Exception e)
                 {
                 }
+
+        }       
+        
+        public void actionPerformed(ActionEvent e)
+        {
+             String out="Frnd1\n"+jtf.getText();
+            
+            try {
+                dout.writeUTF(out);
+                dout.flush();
+            } catch (IOException ex) {
+                Logger.getLogger(Frnd1.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+            jtf.setText("");
+        }
+        
+        public void run()
+        {
+            try {
+                String str="";
+                while(true)
+                {
+                    str=dis.readUTF();
+                    jta.setText(jta.getText()+"\n"+str);
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(Frnd1.class.getName()).log(Level.SEVERE, null, ex);
+            }
+                    
+        }
+    public static void main(String[] args) {
+        Frnd1 frnd1=new Frnd1();
+        
+            
+                Thread t1= new Thread(frnd1);
+                t1.start();
+       
+        
     }
+    
 }
